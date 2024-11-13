@@ -6,22 +6,34 @@
 parameters:
 
 services:
-
     App\DTOResolvers\UserDtoResolver:
         tags:
             - { name: controller.argument_value_resolver, priority: 100 }
     App\DTOResolvers\TaskDtoResolver:
         tags:
             - { name: controller.argument_value_resolver, priority: 100 }
+    App\Exceptions\ExceptionListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception}
+    Redis: '@snc_redis.default'
+
+    App\Service\Impl\CacheServiceImpl:
+        arguments:
+            $redisClient: '@snc_redis.default'
+    # App\Service\Impl\CacheServiceImpl:
+    #    arguments:
+    #        $redisClient: '@snc_redis.default'  # Injects the default Redis client
     # default configuration for services in *this* file
+    App\Service\CacheService:
+        alias: App\Service\Impl\CacheServiceImpl
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
-
+        public: false
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
-        resource: '../src/'
+        resource: '../src/*'
         exclude:
             - '../src/DependencyInjection/'
             - '../src/Entity/'

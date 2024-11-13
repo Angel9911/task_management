@@ -1,12 +1,17 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Entity;
+use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity
  * @ORM\Table (name = "users")
  */
+
+// * @ORM\Entity (repositoryClass=UserRepository::class)
 class User
 {
     /**
@@ -29,7 +34,7 @@ class User
     private $role;
 
     /**
-     * @ORM\OneToMany(targetEntity="Task", mappedBy="assignedUser")
+     * @ORM\OneToMany(targetEntity="Task", mappedBy="assignedUser", fetch="EXTRA_LAZY")
      */
     private $tasks;
 
@@ -37,9 +42,7 @@ class User
      */
     public function __construct()
     {
-        /*$this->username = $username;
-        $this->password = $password;
-        $this->role = $role;*/
+        $this->tasks = new ArrayCollection();
     }
 
     /**
@@ -107,11 +110,11 @@ class User
     }
 
     /**
-     * @return mixed
+     * @return array
      */
-    public function getTasks()
+    public function getTasks(): array
     {
-        return $this->tasks;
+        return $this->tasks->map(fn(Task $task) => $task->toArrayWithoutUser())->toArray();
     }
 
     /**
@@ -122,13 +125,14 @@ class User
         $this->tasks = $tasks;
     }
 
-    public function toArray()
+    public function toArray(): array
     {
+
         return [
             'id' => $this->id,
             'username' => $this->getUsername(),
             'role' => $this->getRole(),
-            'tasks' => array_map(fn($task) => $task->toArray(), $this->getTasks()->toArray())
+            'tasks' => $this->getTasks() !== null ? $this->getTasks()->map(fn(Task $task) => $task->toArrayWithoutUser())->toArray() : []
         ];
     }
 }

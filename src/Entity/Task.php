@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
@@ -135,6 +135,16 @@ class Task
           'description' => $this->getDescription(),
           'statusId' => $this->getStatus()->getId(),
           'assignedUserId' => $this->getAssignedUser()->getId(),
+        ];
+    }
+
+    public function toArrayWithoutUser(): array
+    {
+        return [
+          'id' => $this->id,
+          'title' => $this->title,
+          'description' => $this->description,
+          'statusId' => $this->status->getId(),
         ];
     }
 }

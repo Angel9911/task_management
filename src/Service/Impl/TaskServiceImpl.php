@@ -4,6 +4,7 @@ namespace App\Service\Impl;
 
 use App\DTOs\TaskDto;
 use App\Entity\Task;
+use App\Exceptions\ObjectNotFoundException;
 use App\Service\StatusService;
 use App\Service\TaskService;
 use App\Service\UserService;
@@ -39,7 +40,7 @@ class TaskServiceImpl implements TaskService
      */
     public function createTask(TaskDto $taskDto): Task
     {
-        $assignedUser = $this->userService->getUserIdByUsername($taskDto->getUsername());
+        $assignedUser = $this->userService->getUserByUsername($taskDto->getUsername());
 
         $task = new Task($taskDto->getTitle(), $taskDto->getDescription(), $assignedUser);
 
@@ -54,9 +55,10 @@ class TaskServiceImpl implements TaskService
     }
 
     /**
-     * @throws NotFoundHttpException
-     * @throws NotSupported
+     * @param $id
+     * @param string $status
      * @return Task
+     * @throws ObjectNotFoundException
      */
     public function updateTaskStatus($id, string $status): Task
     {
@@ -64,14 +66,14 @@ class TaskServiceImpl implements TaskService
 
         if(!$status){
 
-            throw new NotFoundHttpException('Status Not Found');
+            throw new ObjectNotFoundException('Status');
         }
 
         $task = $this->getTaskById($id);
 
         if(!$task){
 
-            throw new NotFoundHttpException('Task Not Found');
+            throw new ObjectNotFoundException('Task');
         }
 
         $task->setStatus($status);
@@ -82,7 +84,32 @@ class TaskServiceImpl implements TaskService
         return $task;
     }
 
+    /**
+     * @throws ObjectNotFoundException
+     */
     public function deleteTask($id): bool
+    {
+        $deleteTask = $this->getTaskById($id);
+
+        if(!$deleteTask){
+
+            throw new ObjectNotFoundException('Task');
+        }
+
+        $this->entityManager->remove($deleteTask);
+
+        $this->entityManager->flush();
+
+        return true;
+    }
+
+    /**
+     * @param string $username
+     * @param string $status
+     * @return array
+     * @throws ObjectNotFoundException
+     */
+    public function getTasksByUsernameAndStatus(string $username, string $status): array
     {
 
     }

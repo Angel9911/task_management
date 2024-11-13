@@ -1,9 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Service\Impl;
 
 use App\DTOs\UserDto;
 use App\Entity\User;
+use App\Exceptions\ObjectNotFoundException;
+use App\Repository\UserRepository;
 use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
@@ -13,28 +15,31 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class UserServiceImpl implements UserService
 {
     private EntityManagerInterface $entityManager;
+    private UserRepository $userRepository;
 
-
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(EntityManagerInterface $entityManager, UserRepository $userRepository)
     {
         $this->entityManager = $entityManager;
+        $this->userRepository = $userRepository;
     }
 
     /**
      * @throws OptimisticLockException
      * @throws ORMException
      */
-    public function createUser(UserDto $user): User
+    public function createUser(UserDto $userDto): User
     {
-        $user = new User();
+        $newUser = new User();
 
-        $this->entityManager->persist($user);
+        $createdUser = $this->mapDtoToEntity($newUser, $userDto);
+
+        $this->entityManager->persist($createdUser);
         $this->entityManager->flush();
 
-        return $user;
+        return $createdUser;
     }
 
-    public function getUserIdByUsername($username): User
+    public function getUserByUsername($username): User
     {
         return $this->entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
     }
@@ -47,8 +52,8 @@ class UserServiceImpl implements UserService
     /**
      * @param $userId
      * @param UserDto $userDto
-     * @throws NotFoundHttpException
      * @return User
+     * @throws ObjectNotFoundException
      */
     public function updateUser($userId, UserDto $userDto): User
     {
@@ -56,30 +61,47 @@ class UserServiceImpl implements UserService
 
         if(!$updateUser) {
 
-            throw new NotFoundHttpException("user not found");
+            throw new ObjectNotFoundException("User");
         }
 
-        if($userDto->getUsername() != null){
+        $this->mapDtoToEntity($updateUser, $userDto);
 
-            $updateUser->setUsername($userDto->getUsername());
-        }
-        if($userDto->getPassword() != null){
-
-            $updateUser->setPassword($userDto->getPassword());
-        }
-        if($userDto->getRole() != null){
-
-            $updateUser->setRole($userDto->getRole());
-        }
-
-        $this->entityManager->persist($updateUser);
+        // No need to call persist, as the entity is already managed by Doctrine
         $this->entityManager->flush();
 
         return $updateUser;
     }
 
-    public function deleteUser($userId): bool
+    /**
+     * @throws ObjectNotFoundException
+     */
+    public function deleteUser(User $user): bool
+    {
+        $this->entityManager->remove($user);
+
+        $this->entityManager->flush();
+
+        return true;
+    }
+
+    /**
+     * @param UserDto $userDto
+     * @param User $user
+     * @return User
+     */
+    public function mapDtoToEntity(User $user, UserDto $userDto): User
     {
 
+        if ($userDto->getUsername() != null) {
+            $user->setUsername($userDto->getUsername());
+        }
+        if ($userDto->getPassword() != null) {
+            $user->setPassword($userDto->getPassword());
+        }
+        if ($userDto->getRole() != null) {
+            $user->setRole($userDto->getRole());
+        }
+
+        return $user;
     }
 }

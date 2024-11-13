@@ -1,0 +1,16 @@
+snc_redis:
+    clients:
+        default:
+            type: 'phpredis'          # or 'predis' if you prefer Predis over PHP Redis extension
+            alias: 'default'           # an alias to reference this client in the app
+            dsn: 'redis://127.0.0.1:6379'   # Redis server address
+            logging: false             # Optional: Enable query logging for development purposes
+# Define your clients here. The example below connects to database 0 of the default Redis server.
+#
+# See https://github.com/snc/SncRedisBundle/blob/master/docs/README.md for instructions on
+# how to configure the bundle.
+#
+#        default:
+#            type: phpredis
+#            alias: default
+#            dsn: "%env(REDIS_URL)%"
