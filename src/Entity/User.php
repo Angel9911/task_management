@@ -5,6 +5,8 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity
@@ -12,7 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 
 // * @ORM\Entity (repositoryClass=UserRepository::class)
-class User
+class User implements PasswordAuthenticatedUserInterface
 {
     /**
      * @ORM\Id
@@ -80,7 +82,7 @@ class User
     /**
      * @return mixed
      */
-    public function getPassword()
+    public function getPassword(): ?string
     {
         return $this->password;
     }
@@ -135,4 +137,5 @@ class User
             'tasks' => $this->getTasks() !== null ? $this->getTasks()->map(fn(Task $task) => $task->toArrayWithoutUser())->toArray() : []
         ];
     }
+
 }

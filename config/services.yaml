@@ -6,6 +6,7 @@
 parameters:
 
 services:
+    Symfony\Component\Security\Core\User\UserProviderInterface: '@security.user.provider.concrete.app_user_provider'
     App\DTOResolvers\UserDtoResolver:
         tags:
             - { name: controller.argument_value_resolver, priority: 100 }
@@ -16,10 +17,30 @@ services:
         tags:
             - { name: kernel.event_listener, event: kernel.exception}
     Redis: '@snc_redis.default'
-
+    App\Controller\SecurityController:
+        arguments:
+            $jwtManager: 'lexis_jwt_authentication.jwt_manager'
     App\Service\Impl\CacheServiceImpl:
         arguments:
             $redisClient: '@snc_redis.default'
+    Symfony\Component\Security\Http\Authenticator\AuthenticatorInterface: '@App\Config\Security\UserAuthenticator'
+    App\Config\Security\UserAuthenticator:
+        arguments:
+            $jwtManager: '@lexik_jwt_authentication.jwt_manager'
+            $userProvider: '@security.user.provider.concrete.app_user_provider'
+            $entityManager: '@doctrine.orm.entity_manager'
+    App\Config\Security\UserProvider:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+        autowire: true
+        autoconfigure: true
+        public: false  # Optionally, make the service private (default is false
+    App\Config\Security\UserPasswordEncoder:
+        public: true
+        autowire: true
+        autoconfigure: true
+    App\Command\MigratePasswordsCommand:
+         tags: [ 'console.command' ]
     # App\Service\Impl\CacheServiceImpl:
     #    arguments:
     #        $redisClient: '@snc_redis.default'  # Injects the default Redis client
