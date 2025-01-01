@@ -5,11 +5,30 @@ monolog:
 when@dev:
     monolog:
         handlers:
-            main:
-                type: stream
-                path: "%kernel.logs_dir%/%kernel.environment%.log"
-                level: debug
+            error:
+                type: rotating_file # Creates a new log file every day.
+                path: "%kernel.logs_dir%/%kernel.environment%.error.log"
+                level: error
                 channels: ["!event"]
+                max_files: 30 # Keeps logs for the last 30 days
+                formatter: monolog.formatter.json
+            warning:
+                type: rotating_file
+                path: "%kernel.logs_dir%/%kernel.environment%.warning.log"
+                level: warning
+                channels: [ "!event" ]
+                max_files: 30 # Keeps logs for the last 30 days
+            info:
+                type: rotating_file
+                path: '%kernel.logs_dir%/%kernel.environment%.info.log'
+                level: info
+                max_files: 30
+                formatter: monolog.formatter.json
+            main:
+                type: rotating_file
+                path: '%kernel.logs_dir%/%kernel.environment%.log'
+                level: debug
+                max_files: 30
             # uncomment to get logging in your browser
             # you may have to allow bigger header sizes in your Web server configuration
             #firephp:

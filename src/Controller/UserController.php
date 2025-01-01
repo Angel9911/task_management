@@ -4,22 +4,20 @@ namespace App\Controller;
 
 use App\Constraints\CacheConstraints;
 use App\DTOs\UserDto;
-use App\Entity\Task;
-use App\Entity\User;
 use App\Exceptions\ObjectNotFoundException;
 use App\Exceptions\ObjectNotValidException;
 use App\Service\CacheService;
 use App\Service\UserService;
 use App\utils\ObjectMapper;
-use Cassandra\Exception\ValidationException;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -35,13 +33,19 @@ class UserController extends AbstractController
 
     private Serializer $serializer;
 
+    private LoggerInterface $logger;
+
     private $userKeyCache;
 
-    public function __construct(UserService $userService, CacheService $cacheService)
+    public function __construct(UserService $userService
+        , CacheService $cacheService
+        , LoggerInterface $logger)
     {
         $this->userService = $userService;
 
         $this->cacheService = $cacheService;
+
+        $this->logger = $logger;
 
         $encoders = [new XmlEncoder(), new JsonEncoder()];
         $normalizers = [new ObjectNormalizer()];
@@ -50,9 +54,9 @@ class UserController extends AbstractController
 
         $this->userKeyCache = CacheConstraints::userCache . ':';
     }
-    /**
-     * @Route("/user/create", methods={"POST"})
-     */
+
+    #[Route('/user/create', methods: ['POST'])]
+    #[IsGranted("ROLE_USER")]
     public function createUser(UserDto $userDto, ValidatorInterface $validation): JsonResponse
     {
         $errors = $this->validateObject($userDto, $validation);
@@ -72,13 +76,21 @@ class UserController extends AbstractController
 
         } catch (OptimisticLockException|ORMException $e) {
 
+            $this->logger->error('Failed to create user: ',
+                [
+                    'source' => 'controller',
+                    'controller' => __CLASS__,
+                    'method' => __METHOD__,
+                    'exception' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
             return new JsonResponse($e->getMessage(), Response::HTTP_BAD_REQUEST);
         }
     }
 
-    /**
-     * @Route("/user/update/{id}", methods={"PUT"})
-     */
+    #[Route('/user/update/{id}', methods: ['PUT'])]
+    #[IsGranted("ROLE_USER")]
     public function updateUser(int $id, UserDto $userDto, ValidatorInterface $validation): JsonResponse // /user/delete/2
     {
         $errors = $this->validateObject($userDto, $validation);
@@ -100,15 +112,34 @@ class UserController extends AbstractController
 
         } catch (ObjectNotFoundException $e){
 
+            $this->logger->error('User not found to update: ',
+                [
+                    'source' => 'controller',
+                    'controller' => __CLASS__,
+                    'method' => __METHOD__,
+                    'exception' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
             return new JsonResponse($e->getMessage(), Response::HTTP_NOT_FOUND);
         }
         catch (OptimisticLockException|ORMException $e) {
+
+            $this->logger->error('Failed to update user: ',
+                [
+                    'source' => 'controller',
+                    'controller' => __CLASS__,
+                    'method' => __METHOD__,
+                    'exception' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
 
             return new JsonResponse($e->getMessage(), Response::HTTP_BAD_REQUEST);
         }
     }
 
     #[Route('/user/delete', methods: ['DELETE'])] // the modern approach for routing in Symfony project - 8.0 or later
+    #[IsGranted("ROLE_USER")]
     public function deleteUser(Request $request): JsonResponse
     {
 
@@ -133,6 +164,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/user/tasks/{username}', methods: ['GET'])]
+    #[IsGranted("ROLE_USER")]
     public function getUserTasksByUsername(string $username): JsonResponse
     {
         if(empty($username)){
@@ -161,6 +193,15 @@ class UserController extends AbstractController
             return new JsonResponse($user->getTasks(), Response::HTTP_OK);
 
         } catch (ObjectNotFoundException $e){
+
+            $this->logger->error('Failed to get user tasks: ',
+                [
+                    'source' => 'controller',
+                    'controller' => __CLASS__,
+                    'method' => __METHOD__,
+                    'exception' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
 
             return new JsonResponse($e->getMessage(), Response::HTTP_NOT_FOUND);
         }

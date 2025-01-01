@@ -3,7 +3,9 @@
 namespace App\Command;
 
 use App\private_jobs\PasswordMigrationJob;
+use App\utils\ObjectMapper;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -21,13 +23,17 @@ class MigratePasswordsCommand extends Command
 {
     protected static $defaultName = 'app:migrate-passwords';
 
+    private LoggerInterface $logger;
+
     private $passwordMigrationJob;
     public function __construct(
         UserPasswordHasherInterface $passwordHasher,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        LoggerInterface $logger
     )
     {
         $this->passwordMigrationJob = new PasswordMigrationJob($passwordHasher,$entityManager);
+        $this->logger = $logger;
         parent::__construct();
     }
 
@@ -45,8 +51,21 @@ class MigratePasswordsCommand extends Command
 
         try {
             $this->passwordMigrationJob->migratePassword();
+
+            $this->logger->info('Successfully migration passwords: ',
+            [
+                'timestamp' => (new \DateTime())->format('Y-m-d H:i:s')
+            ]);
+
             $output->writeln('<info>Passwords have been hashed successfully!</info>');
         } catch (\Exception $e) {
+
+            $this->logger->info('Failed migration passwords: ',
+                [
+                    'exception' => $e->getMessage(),
+                    'timestamp' => (new \DateTime())->format('Y-m-d H:i:s')
+                ]);
+
             $output->writeln('<error>An error occurred: ' . $e->getMessage() . '</error>');
             return Command::FAILURE;
         }

@@ -4,22 +4,17 @@ namespace App\Controller;
 
 use App\Constraints\CacheConstraints;
 use App\DTOs\TaskDto;
-use App\DTOs\UserDto;
-use App\Entity\Task;
 use App\Exceptions\ObjectNotFoundException;
 use App\Exceptions\ObjectNotValidException;
 use App\Service\CacheService;
 use App\Service\TaskService;
-use App\Service\UserService;
 use App\utils\ObjectMapper;
-use Doctrine\ORM\Exception\NotSupported;
 use Doctrine\ORM\Exception\ORMException;
-use Doctrine\ORM\OptimisticLockException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -29,15 +24,18 @@ class TaskController extends AbstractController
 
     private CacheService $cacheService;
 
-    public function __construct(TaskService $taskService, CacheService $cacheService)
+    private LoggerInterface $logger;
+
+    public function __construct(TaskService $taskService
+        , CacheService $cacheService
+        , LoggerInterface $logger)
     {
         $this->taskService = $taskService;
         $this->cacheService = $cacheService;
+        $this->logger = $logger;
     }
 
-    /**
-     * @Route("/task/create", methods={"POST"})
-     */
+    #[Route('/task/create', methods: ['POST'])]
     public function createTask(TaskDto $taskDto, ValidatorInterface $validator): JsonResponse
     {
         $errors = $this->validateObject($taskDto, $validator);
@@ -63,9 +61,7 @@ class TaskController extends AbstractController
         }
     }
 
-    /**
-     * @Route("/task/update/{id}", methods={"PUT"})
-     */
+    #[Route('/task/update/{id}', methods: ['PUT'])]
     public function updateTask(int $id, Request $request): JsonResponse|Response
     {
         $data = ObjectMapper::mapJsonToObject($request->getContent());
@@ -83,6 +79,15 @@ class TaskController extends AbstractController
             return new JsonResponse(ObjectMapper::mapObjectToJson($updatedTask->toArray()), Response::HTTP_CREATED);
 
         } catch (ObjectNotFoundException $e){
+
+            $this->logger->error('Failed to update task: ',
+            [
+                'source' => 'controller',
+                'controller' => __CLASS__,
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return new JsonResponse($e->getMessage(), Response::HTTP_NOT_FOUND);
         }
@@ -104,7 +109,16 @@ class TaskController extends AbstractController
 
             return new JsonResponse('', Response::HTTP_NO_CONTENT); // instead using HTTP_OK
 
-        }catch (objectNotFoundException $e){
+        }catch (ObjectNotFoundException $e){
+
+            $this->logger->error('Failed to delete task: ',
+            [
+                'source' => 'controller',
+                'controller' => __CLASS__,
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return new JsonResponse($e->getMessage(), Response::HTTP_NOT_FOUND);
         }
@@ -117,27 +131,83 @@ class TaskController extends AbstractController
 
         $getUsername = $request->query->filter('username',null,FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        if(!empty($getStatus) && !empty($getUsername) && ctype_alnum($getStatus) && ctype_alnum($getUsername)){
+        if(empty($getStatus) || empty($getUsername) || !ctype_alnum($getStatus) || !ctype_alnum($getUsername)){
 
             return new JsonResponse("Invalid input", Response::HTTP_BAD_REQUEST);
         }
 
         try{
 
-            $tasks = $this->taskService->getTasksByUsernameAndStatus($getStatus,$getUsername);
+            $tasks = $this->taskService->getTasksByUsernameAndStatus($getUsername,$getStatus);
 
-            return new JsonResponse(ObjectMapper::mapObjectToJson($tasks), Response::HTTP_OK);
+            return new JsonResponse($tasks, Response::HTTP_OK);
         } catch (ObjectNotFoundException $e){
+
+            $this->logger->error('Failed to fetch tasks by status and username',
+            [
+                'source' => 'controller',
+                'controller' => __CLASS__,
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return new JsonResponse($e->getMessage(), Response::HTTP_NOT_FOUND);
         }
 
     }
 
-    #[Route('/task/all', methods: ['GET'])]
-    public function getAllTasks()
+    #[Route('/task/user', methods: ['GET'])]
+    public function getTasksByUsername(Request $request): JsonResponse
     {
+        $getUsername = $request->query->filter('username', null, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
+        if(empty($getUsername)){
+
+            return new JsonResponse('Invalid input', Response::HTTP_BAD_REQUEST);
+        }
+
+        try{
+
+            $tasks = $this->taskService->getTasksByUsername($getUsername);
+
+            return new JsonResponse($tasks, Response::HTTP_OK);
+
+        }catch (ObjectNotFoundException $e){
+            $this->logger->error('Failed to fetch tasks by username',
+            [
+                'source' => 'controller',
+                'controller' => __CLASS__,
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return new JsonResponse($e->getMessage(), Response::HTTP_NOT_FOUND);
+        }
+    }
+
+    #[Route('/task/all', methods: ['GET'])]
+    public function getAllTasks(): JsonResponse
+    {
+        try {
+
+            $tasks = $this->taskService->getAllTasks();
+
+            return new JsonResponse($tasks, Response::HTTP_OK);
+        }catch (ObjectNotFoundException $e){
+
+            $this->logger->error('Failed to fetch all created tasks',
+            [
+                'source' => 'controller',
+                'controller' => __CLASS__,
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return new JsonResponse($e->getMessage(), Response::HTTP_NOT_FOUND);
+        }
     }
     private function validateObject(TaskDto $taskDto, ValidatorInterface $validator): array
     {

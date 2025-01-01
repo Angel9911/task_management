@@ -23,6 +23,8 @@ services:
     App\Service\Impl\CacheServiceImpl:
         arguments:
             $redisClient: '@snc_redis.default'
+    monolog.formatter.json:
+        class: Monolog\Formatter\JsonFormatter
     Symfony\Component\Security\Http\Authenticator\AuthenticatorInterface: '@App\Config\Security\UserAuthenticator'
     App\Config\Security\UserAuthenticator:
         arguments:

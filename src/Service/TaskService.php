@@ -11,5 +11,7 @@ interface TaskService
     public function createTask(TaskDto $taskDto): Task;
     public function updateTaskStatus($id, string $status): Task;
     public function getTasksByUsernameAndStatus(string $username, string $status): array;
+    public function getTasksByUsername(string $username): array;
+    public function getAllTasks(): array;
     public function deleteTask($id): bool;
 }

@@ -15,11 +15,14 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class UserServiceImpl implements UserService
 {
     private EntityManagerInterface $entityManager;
+
     private UserRepository $userRepository;
 
-    public function __construct(EntityManagerInterface $entityManager, UserRepository $userRepository)
+    public function __construct(EntityManagerInterface $entityManager
+    , UserRepository $userRepository)
     {
         $this->entityManager = $entityManager;
+
         $this->userRepository = $userRepository;
     }
 
@@ -41,12 +44,12 @@ class UserServiceImpl implements UserService
 
     public function getUserByUsername($username): User
     {
-        return $this->entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
+        return $this->userRepository->findUserByUsername($username);
     }
 
     public function getUserByUserId($id): User|null
     {
-        return $this->entityManager->getRepository(User::class)->findOneBy(['id' => $id]);
+        return $this->userRepository->findUserById($id);
     }
 
     /**

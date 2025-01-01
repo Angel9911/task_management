@@ -4,7 +4,9 @@ namespace App\Controller;
 
 use App\Config\Security\UserPasswordEncoder;
 use App\Config\Security\UserProvider;
+use App\utils\ObjectMapper;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
@@ -13,7 +15,11 @@ use Symfony\Component\Security\Http\Authenticator\AuthenticatorInterface;
 
 class SecurityController extends AbstractController
 {
-    public function __construct(){}
+    private LoggerInterface $logger;
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
     #[Route('/api/login', name: 'api_login', methods: ['POST'])]
     public function login(Request $request, AuthenticatorInterface $userAuthenticator): JsonResponse
     {
@@ -28,6 +34,12 @@ class SecurityController extends AbstractController
             $jwt = $response->getContent();
 
             $successCode = $response->getStatusCode();
+
+            $this->logger->info('Successfully the user logged in: ',
+            [
+                'username' => ObjectMapper::mapJsonToObject($request->getContent())['username'],
+                'timestamp' => (new \DateTime())->format('Y-m-d H:i:s')
+            ]);
 
             return new JsonResponse([
                 'status' => 'success',

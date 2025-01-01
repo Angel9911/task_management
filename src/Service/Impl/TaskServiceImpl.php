@@ -5,6 +5,7 @@ namespace App\Service\Impl;
 use App\DTOs\TaskDto;
 use App\Entity\Task;
 use App\Exceptions\ObjectNotFoundException;
+use App\Repository\TaskRepository;
 use App\Service\StatusService;
 use App\Service\TaskService;
 use App\Service\UserService;
@@ -16,19 +17,26 @@ class TaskServiceImpl implements TaskService
 {
     private EntityManagerInterface $entityManager;
 
+    private TaskRepository $taskRepository;
+
     private StatusService $statusService;
 
     private UserService $userService;
 
     private const newCreatedTask = 'To Do';
 
-    public function __construct(EntityManagerInterface $entityManager, StatusService $statusService, UserService $userService){
+    public function __construct(EntityManagerInterface $entityManager
+        , StatusService $statusService
+        , UserService $userService
+        , TaskRepository $taskRepository){
 
         $this->entityManager = $entityManager;
 
         $this->statusService = $statusService;
 
         $this->userService = $userService;
+
+        $this->taskRepository = $taskRepository;
     }
 
     public function getTaskById(int $id): Task|null
@@ -111,6 +119,44 @@ class TaskServiceImpl implements TaskService
      */
     public function getTasksByUsernameAndStatus(string $username, string $status): array
     {
+        $getTasks = $this->taskRepository->findTasksByUsernameAndStatus($username, $status);
 
+        if(empty($getTasks)){
+
+            throw new ObjectNotFoundException('Not found any tasks');
+        }
+
+        return array_map(fn(Task $task) => $task->toArray(), $getTasks);
+    }
+
+
+    /**
+     * @throws ObjectNotFoundException
+     */
+    public function getAllTasks(): array
+    {
+        $getAllTasks = $this->taskRepository->findAllTasks();
+
+        if(empty($getAllTasks)){
+
+            throw new ObjectNotFoundException('Not found any tasks');
+        }
+
+        return array_map(fn(Task $task) => $task->toArray(), $getAllTasks);
+    }
+
+    /**
+     * @throws ObjectNotFoundException
+     */
+    public function getTasksByUsername(string $username): array
+    {
+        $getAllTasksByUsername = $this->taskRepository->findTasksByUsername($username);
+
+        if(empty($getAllTasksByUsername)){
+
+            throw new ObjectNotFoundException('Not found any tasks');
+        }
+
+        return array_map(fn(Task $task) => $task->toArray(), $getAllTasksByUsername);
     }
 }
