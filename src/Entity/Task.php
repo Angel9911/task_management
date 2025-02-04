@@ -41,11 +41,12 @@ class Task
      * @param $assignedUser
      */
 
-    public function __construct($title, $description, $assignedUser)
+    public function __construct($title, $description, $assignedUser, $status = null)
     {
         $this->title = $title;
         $this->description = $description;
         $this->assignedUser = $assignedUser;
+        $this->status = $status;
     }
 
     /**
@@ -146,5 +147,14 @@ class Task
           'description' => $this->description,
           'statusId' => $this->status->getId(),
         ];
+    }
+    public static function fromArray(array $data): Task
+    {
+        $task = new self($data['title'], $data['description'], $data['assignedUserId']);
+
+        $task->setId($data['id']);
+        $task->setStatus($data['statusId']);
+
+        return $task;
     }
 }

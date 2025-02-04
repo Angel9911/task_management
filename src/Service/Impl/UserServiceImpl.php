@@ -67,7 +67,7 @@ class UserServiceImpl implements UserService
             throw new ObjectNotFoundException("User");
         }
 
-        $this->mapDtoToEntity($updateUser, $userDto);
+        $updateUser = $this->mapDtoToEntity($updateUser, $userDto);
 
         // No need to call persist, as the entity is already managed by Doctrine
         $this->entityManager->flush();

@@ -23,7 +23,7 @@ class TaskServiceImpl implements TaskService
 
     private UserService $userService;
 
-    private const newCreatedTask = 'To Do';
+    private const newCreatedTask = 'ToDo';
 
     public function __construct(EntityManagerInterface $entityManager
         , StatusService $statusService

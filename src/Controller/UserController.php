@@ -4,11 +4,13 @@ namespace App\Controller;
 
 use App\Constraints\CacheConstraints;
 use App\DTOs\UserDto;
+use App\Entity\Task;
 use App\Exceptions\ObjectNotFoundException;
 use App\Exceptions\ObjectNotValidException;
 use App\Service\CacheService;
 use App\Service\UserService;
 use App\utils\ObjectMapper;
+use App\utils\ValidatorUtils;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
 use Psr\Log\LoggerInterface;
@@ -59,7 +61,7 @@ class UserController extends AbstractController
     #[IsGranted("ROLE_USER")]
     public function createUser(UserDto $userDto, ValidatorInterface $validation): JsonResponse
     {
-        $errors = $this->validateObject($userDto, $validation);
+        $errors = ValidatorUtils::validateObject($userDto, $validation);
 
         if(!empty($errors)) {
 
@@ -93,7 +95,7 @@ class UserController extends AbstractController
     #[IsGranted("ROLE_USER")]
     public function updateUser(int $id, UserDto $userDto, ValidatorInterface $validation): JsonResponse // /user/delete/2
     {
-        $errors = $this->validateObject($userDto, $validation);
+        $errors = ValidatorUtils::validateObject($userDto, $validation);
 
         if(!empty($errors)) {
 
@@ -102,13 +104,13 @@ class UserController extends AbstractController
 
         try {
 
-            $this->cacheService->delete($this->userKeyCache . $userDto->getUsername());
+            //$this->cacheService->delete($this->userKeyCache . $userDto->getUsername()); cache doesn't working
 
             $user = $this->userService->updateUser($id, $userDto);
 
-            $this->cacheService->set($this->userKeyCache . $user->getUsername(), $user);
+            //$this->cacheService->set($this->userKeyCache . $user->getUsername(), $user); cache doesn't working
 
-            return new JsonResponse(ObjectMapper::mapObjectToJson($user->toArray()), Response::HTTP_CREATED);
+            return new JsonResponse($user->toArray(), Response::HTTP_CREATED);
 
         } catch (ObjectNotFoundException $e){
 
@@ -186,11 +188,13 @@ class UserController extends AbstractController
 
             $user = $this->userService->getUserByUsername($username);
 
-            //$serializedTasks = $this->serializer->serialize($user->getTasks(), 'json');
+            $tasksArray = $user->getTasks()
+                ->map(fn(Task $task) => $task->toArrayWithoutUser())
+                ->toArray();
 
-            $this->cacheService->set($userKeyCache,ObjectMapper::mapObjectToJson($user->getTasks()));
+            $this->cacheService->set($userKeyCache,ObjectMapper::mapObjectToJson($tasksArray));
 
-            return new JsonResponse($user->getTasks(), Response::HTTP_OK);
+            return new JsonResponse($tasksArray, Response::HTTP_OK);
 
         } catch (ObjectNotFoundException $e){
 
@@ -205,20 +209,5 @@ class UserController extends AbstractController
 
             return new JsonResponse($e->getMessage(), Response::HTTP_NOT_FOUND);
         }
-    }
-
-    private function validateObject(UserDto $userDto, ValidatorInterface $validator): array
-    {
-        $errors = $validator->validate($userDto);
-        $errorMessages = [];
-
-        if (count($errors) > 0) {
-
-            foreach ($errors as $error) {
-                $errorMessages[] = $error->getMessage();
-            }
-        }
-
-        return $errorMessages;
     }
 }

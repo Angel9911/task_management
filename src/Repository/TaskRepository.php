@@ -19,7 +19,7 @@ class TaskRepository extends ServiceEntityRepository
     }
 
     public function findTasksByUsernameAndStatus(string $username, string $status): array
-    {   var_dump($username, $status);
+    {
         return $this->createQueryBuilder('t')
             ->join('t.assignedUser', 'u')
             ->join('t.status', 's')

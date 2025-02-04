@@ -36,9 +36,19 @@ class User implements PasswordAuthenticatedUserInterface
     private $role;
 
     /**
+     * @ORM\Column(type = "string")
+     */
+    private string $phone;
+
+    /**
+     * @ORM\Column(type = "string")
+     */
+    private string $email;
+
+    /**
      * @ORM\OneToMany(targetEntity="Task", mappedBy="assignedUser", fetch="EXTRA_LAZY")
      */
-    private $tasks;
+    private Collection $tasks;
 
     /**
      */
@@ -112,11 +122,43 @@ class User implements PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return array
+     * @return string
      */
-    public function getTasks(): array
+    public function getPhone()
     {
-        return $this->tasks->map(fn(Task $task) => $task->toArrayWithoutUser())->toArray();
+        return $this->phone;
+    }
+
+    /**
+     * @param mixed $phoneNumber
+     */
+    public function setPhoneNumber(string $phoneNumber): void
+    {
+        $this->phone = $phoneNumber;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEmail()
+    {
+        return $this->email;
+    }
+
+    /**
+     * @param mixed $email
+     */
+    public function setEmail(string $email): void
+    {
+        $this->email = $email;
+    }
+    /**
+     * @return Collection
+     */
+    public function getTasks(): Collection
+    {
+        return $this->tasks;
+        //return $this->tasks->map(fn(Task $task) => $task->toArrayWithoutUser())->toArray();
     }
 
     /**
