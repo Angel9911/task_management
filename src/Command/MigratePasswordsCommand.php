@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\private_jobs\PasswordMigrationJob;
+use App\ScheduleJobs\PasswordMigrationJob;
 use App\utils\ObjectMapper;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;

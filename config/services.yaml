@@ -6,6 +6,9 @@
 parameters:
 
 services:
+    App\ScheduleJobs\DeleteFileJob\DeleteMessageHandlerJob:
+        autowire: true
+        autoconfigure: true
     Symfony\Component\Security\Core\User\UserProviderInterface: '@security.user.provider.concrete.app_user_provider'
     App\DTOResolvers\UserDtoResolver:
         tags:
