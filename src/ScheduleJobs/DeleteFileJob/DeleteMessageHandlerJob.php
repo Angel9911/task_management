@@ -21,7 +21,8 @@ class DeleteMessageHandlerJob
         $this->logger->info('Processing message: ' . get_class($message));
 
         // Your file deletion logic
-        $logDir = dirname(__DIR__, 2) . '/var/log';
+        $logDir = dirname(__DIR__, 3) . '/var/log';
+
 
         if (!is_dir($logDir)) {
             $this->logger->error('The log directory is not correctly configured.');
@@ -29,7 +30,7 @@ class DeleteMessageHandlerJob
         }
 
         $currentTime = time();
-        $threshold = 30 * 24 * 60 * 60; // older than 30 days in seconds
+        $threshold = 5 * 24 * 60 * 60;; // older than 5 days in seconds
 
         $deletedFilesCount = 0;
 
@@ -46,7 +47,7 @@ class DeleteMessageHandlerJob
                 $fileLastModifiedTime = filemtime($filePath);
 
                 $olderFile = $currentTime - $fileLastModifiedTime;
-
+                $this->logger->info(" old file: $olderFile");
                 if ($olderFile > $threshold) {
 
                     if (unlink($filePath)) {

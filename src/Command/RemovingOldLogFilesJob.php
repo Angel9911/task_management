@@ -27,7 +27,7 @@ class RemovingOldLogFilesJob extends Command
        $output->writeln('<info>Starting deleting old log files...</info>');
 
        $logDir = dirname(__DIR__,2) . '/var/log';
-
+       $output->writeln('<error> . '.$logDir.' . </error>');
        if(!is_dir($logDir)) {
 
            $output->writeln('<error>The log directory is not correctly </error>');
@@ -36,7 +36,7 @@ class RemovingOldLogFilesJob extends Command
 
        $currentTime = time();
 
-       $threshold = 30 * 24 * 60 * 60; // older than 30 days in seconds
+       $threshold = 5 * 24 * 60 * 60; // older than 30 days in seconds
 
        try {
 

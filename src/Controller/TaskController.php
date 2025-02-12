@@ -59,7 +59,7 @@ class TaskController extends AbstractController
     public function createTask(TaskDto $taskDto, ValidatorInterface $validator): JsonResponse
     {
         $errors = ValidatorUtils::validateObject($taskDto,$validator);
-        var_dump(openssl_get_cert_locations());
+
         if(!empty($errors)) {
 
             throw new ObjectNotValidException('Task is not valid. The following errors occurred:'.implode("\n",$errors));
@@ -71,7 +71,7 @@ class TaskController extends AbstractController
 
             $this->updateUserCache($task->getAssignedUser()->getUsername());// invalidate cache when the new user's task is created and assigned.
 
-            // $this->eventDispatcher->dispatch(new TaskEvent($task), TaskEvent::NAME);
+            //$this->eventDispatcher->dispatch(new TaskEvent($task), TaskEvent::NAME); // when the task is created, sends messages through email/viber
 
             return new JsonResponse(ObjectMapper::mapObjectToJson($task->toArray()), Response::HTTP_CREATED);
 
@@ -262,7 +262,7 @@ class TaskController extends AbstractController
         $userKeyCache = CacheConstraints::userCache . ':' . $username; // check
 
         $currentCacheTasks = RedisWrapper::getCache($userKeyCache);
-
+        var_dump($currentCacheTasks);
         if ($currentCacheTasks) {
 
             $updatedUserTask = $this->userService->getUserByUsername($username);

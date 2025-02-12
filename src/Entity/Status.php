@@ -49,7 +49,7 @@ class Status
     /**
      * @return mixed
      */
-    public function getStatus()
+    public function getStatus(): string
     {
         return $this->status;
     }
