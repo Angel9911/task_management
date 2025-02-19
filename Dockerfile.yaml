@@ -27,7 +27,7 @@ COPY . /var/www
 RUN chown -R www-data:www-data /var/www
 
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Expose port 8000 (default for Symfony)
 EXPOSE 8000
