@@ -1,6 +1,6 @@
-/vendor
-/node_modules
-/.env
-/.git
-/.gitignore
-/var/log
+.git
+vendor/
+node_modules/
+var/cache/
+var/logs/
+.env.local
