@@ -29,8 +29,15 @@ RUN chown -R www-data:www-data /var/www
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Expose port 8000 for Symfony (or change to 80 if needed)
+# Copy Nginx and Supervisor configuration
+COPY docker/nginx.conf /etc/nginx/sites-available/default
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Create symbolic link for Nginx default site
+RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+
+# Expose Railway's default port 8080
 EXPOSE 8080
 
-# Start the PHP-FPM server
-CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]
+# Start Nginx and PHP-FPM together using Supervisor
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
