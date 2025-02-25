@@ -1,4 +1,4 @@
-# Use PHP 8.1 with FPM (since your local PHP is 8.1)
+# Use PHP 8.1 with FPM
 FROM php:8.1-fpm
 
 # Set working directory
@@ -17,6 +17,8 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     && docker-php-ext-install pdo pdo_mysql mbstring zip
 
+RUN cp /etc/nginx/mime.types /app/mime.types
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -29,12 +31,9 @@ RUN chown -R www-data:www-data /var/www
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Copy Nginx and Supervisor configuration
-COPY docker/nginx.conf /etc/nginx/sites-available/default
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Create symbolic link for Nginx default site
-RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+# Copy Nginx and Supervisor configuration (from same directory)
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Expose Railway's default port 8080
 EXPOSE 8080
