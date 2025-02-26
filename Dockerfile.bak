@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libonig-dev \
     libzip-dev \
+    libssl-dev \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
     && docker-php-ext-install pdo pdo_mysql mbstring zip
 
 # Install Composer
@@ -27,7 +30,7 @@ RUN chown -R www-data:www-data /var/www
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Expose the correct port (Railway expects your app to listen on PORT)
+# Expose the correct port (Fly.io expects your app to listen on PORT)
 EXPOSE 8080
 
 # Start PHP built-in server

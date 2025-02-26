@@ -30,6 +30,9 @@ RUN chown -R www-data:www-data /var/www
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
+# Ensure vendor directory is there
+RUN ls -lah /var/www/vendor || (echo "Vendor directory is missing!" && exit 1)
+
 # Expose the correct port (Fly.io expects your app to listen on PORT)
 EXPOSE 8080
 
