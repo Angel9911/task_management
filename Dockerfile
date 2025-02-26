@@ -18,8 +18,8 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-enable redis \
     && docker-php-ext-install pdo pdo_mysql mbstring zip
 
-# Install Composer directly
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Copy application files
 COPY . /var/www
@@ -28,10 +28,7 @@ COPY . /var/www
 RUN chown -R www-data:www-data /var/www
 
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
-
-# Ensure vendor directory is there
-RUN ls -lah /var/www/vendor || (echo "Vendor directory is missing!" && exit 1)
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Expose the correct port (Fly.io expects your app to listen on PORT)
 EXPOSE 8080
