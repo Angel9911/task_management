@@ -28,7 +28,7 @@ COPY . /var/www
 RUN chown -R www-data:www-data /var/www
 
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+RUN composer install --no-dev --optimize-autoloader
 
 # Ensure vendor directory is there
 RUN ls -lah /var/www/vendor || (echo "Vendor directory is missing!" && exit 1)
