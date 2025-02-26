@@ -28,7 +28,7 @@ COPY . /var/www
 RUN chown -R www-data:www-data /var/www
 
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+RUN composer install --optimize-autoloader --no-scripts
 
 # Expose the correct port (Fly.io expects your app to listen on PORT)
 EXPOSE 8080
