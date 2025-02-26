@@ -5,7 +5,10 @@ namespace App\Controller;
 use App\Config\Security\UserPasswordEncoder;
 use App\Config\Security\UserProvider;
 use App\utils\ObjectMapper;
+use Doctrine\DBAL\Exception\DriverException;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -45,7 +48,7 @@ class SecurityController extends AbstractController
                 'status' => 'success',
                 'token' => $jwt
             ], $successCode);
-        } catch (\Exception $e) {
+        } catch (AuthenticationException $e) {
 
             $response = $userAuthenticator->onAuthenticationFailure($request, $e);
 
@@ -56,6 +59,14 @@ class SecurityController extends AbstractController
                 'status' => 'error',
                 'message' => $errorMessage
             ], $errorCode);
+        } catch (DriverException $e){
+
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+                'trace' => $e->getTrace()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+
     }
 }
