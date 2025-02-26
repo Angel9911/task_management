@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && docker-php-ext-install pdo pdo_mysql mbstring zip
+    && docker-php-ext-install pdo pdo_pgsql pgsql mbstring zip
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -30,7 +30,7 @@ RUN chown -R www-data:www-data /var/www
 # Install PHP dependencies
 RUN composer install --optimize-autoloader --no-scripts
 
-# Expose the correct port (Fly.io expects your app to listen on PORT)
+# Expose the correct port
 EXPOSE 8080
 
 # Start PHP built-in server
