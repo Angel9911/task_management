@@ -7895,7 +7895,7 @@
       <tag name="snc_redis.client" alias="default"/>
       <argument>Redis</argument>
       <argument type="collection">
-        <argument>redis://127.0.0.1:6379</argument>
+        <argument>%env(REDIS_URL)%</argument>
       </argument>
       <argument type="collection">
         <argument key="connection_async">false</argument>

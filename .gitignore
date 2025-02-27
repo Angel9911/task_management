@@ -1,4 +1,5 @@
 
 ###> symfony/framework-bundle ###
 /.env.dev
-
+/var/log
+/var/log/dev.*
